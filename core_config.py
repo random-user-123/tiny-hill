@@ -15,7 +15,7 @@ class core_config:
   def _set_config_defaults(self):
     self.debug = False
     
-    self.author = "bvowk"
+    self.author = "anonymous"
     self.hillkey = "tiny"
 
     # Core settings for running the entries, these aren't editable via command line because
@@ -40,8 +40,6 @@ class core_config:
 
     # Minimum hill size to keep, and maximum to fill to
     self.hill_size = 50
-
-    
 
   def set_config_overrides(self, **kwargs):
     for key, value in kwargs.items():

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package battle;
+
+import "wade_messages.proto";
+
+service Battle {
+  rpc PutBenchmark (PutBenchmarkRequest) returns (PutBenchmarkResponse); 
+  rpc RunBattles (RunBattlesRequest) returns (RunBattlesResponse); 
+}

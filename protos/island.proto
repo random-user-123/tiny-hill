@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package island;
+
+import "wade_messages.proto";
+
+service Island {
+  rpc GetWork (GetWorkRequest) returns (WorkChunk);  // Get work, ie island or scoring chunks
+  rpc PutWork (PutWorkRequest) returns (PutWorkResponse); // Put work, either island or scoring chunks
+}

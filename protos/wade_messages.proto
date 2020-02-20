@@ -1,0 +1,161 @@
+syntax = "proto2";
+
+enum StatusEnum {
+  OK = 200;
+  E_QUICK_SCORE_FAILED = 500;
+  E_NO_BENCHMARK = 501;
+  E_NO_QUICK_SCORE = 502;
+  E_PARSING_FAILED = 503;
+  E_BENCHMARK_FAILED = 504;
+}
+
+message CoreSettings {
+  optional uint32 coresize = 1;
+  optional uint32 cycles = 2;
+  optional uint32 max_length = 3;
+  optional uint32 processes = 4;
+  optional uint32 min_sep = 5;
+}
+
+message Tag {
+  optional string name = 1;  // Name of tag
+  optional string value = 2; // Value as a string
+}
+
+message TagData {
+  repeated Tag tags = 1;
+}
+
+message Redcode {
+  message Instruction {
+    optional uint32 opcode = 1;
+    optional uint32 modifier = 2;
+    optional uint32 amode = 3; 
+    optional uint32 bmode = 4;
+    optional sint32 afield = 5;
+    optional sint32 bfield = 6;
+    optional string label = 7;
+  }
+  optional uint32 start = 1;
+  repeated Instruction code = 2;
+  optional uint32 coresize = 3;
+}
+
+message Benchmark {
+  optional string benchmark_hash = 1; // Benchmark hash for the group
+  optional string benchamrk_name = 3;
+
+  message BenchEntry {
+    optional string name = 1; // Name of entry
+    optional Redcode code = 2; // Parsed code of entry
+  }
+
+  repeated BenchEntry bench_entries = 2; // Entries in the benchmark  
+
+  // For the battle server
+  optional CoreSettings core_settings = 4;
+}
+
+message ScoreData {
+  optional string benchmark_hash = 1;
+  optional float benchmark_score = 2;
+  optional uint32 rounds = 3;
+    
+  message Score {
+    optional string name = 1; // Name of benchmark entry     
+    optional uint32 wins = 2;  // Wins of entry vs bench entry
+    optional uint32 ties = 3;  // Ties of entry vs bench entry
+    optional uint32 loss = 4;  // Losses to bench entry
+  }
+
+  repeated Score scores = 4;
+
+}
+
+message Entry {
+  optional string name = 1; // Name of entry
+  optional string hash = 2; // Hash of entry code
+  optional Redcode code = 3; // Parsed code of entry
+
+  optional ScoreData score_data = 4;
+  optional TagData tag_data = 6;
+
+  // Fields used by battle service
+  optional StatusEnum status = 7; 
+  optional double elapsed_seconds = 8;
+  optional uint64 rounds_executed = 9;  
+  optional string creator_func = 10;
+}
+
+message MetricsChunk {
+  optional string island_hash = 1;
+  optional string client_name = 2;
+  message Metric {
+    optional string name = 1;  // Name of metric ie entries_bred
+    optional uint64 value = 2; // Value of metric
+    optional string units = 3; // Units of metric ie rounds per second
+  }
+  repeated Metric metrics = 3; 
+}
+
+message WorkChunk {
+  optional string island_hash = 1;  // Randomly assigned hash for island
+  optional string benchmark_hash = 2;  // Benchmark hash to use for scoring
+  optional string client_profile = 3;  // Store the client profile for information
+  optional uint32 work_type = 4; // Determines what we do with the entries
+  repeated Entry chunk_entries = 5; // Entries to either score or evolve
+  optional uint32 quick_validation_minimum_score = 6;  
+  optional bytes benchmark_str = 7; // String encoded benchmark proto
+}
+
+message PutWorkRequest {
+  optional string island_hash = 1;
+  optional string client_name = 2;
+  optional uint64 rounds_executed = 3; // Number of rounds we executed processing 
+                                       // this WorkChunk
+  optional uint64 elapsed_seconds = 4; // The number of seconds we worked on this
+                                       // WorkChunk
+
+  optional WorkChunk work_chunk = 5;
+
+  // There next 4 values are counters about new entry creation and validation
+  optional uint32 entries_bred = 6 [deprecated=true];
+  optional uint32 entries_mutated = 7 [deprecated=true];
+  optional uint32 entries_random = 8 [deprecated=true]; 
+  optional uint32 entries_failed = 9 [deprecated=true];
+
+  // Metrics are important, this obsoletes the previous 4 fields
+  optional MetricsChunk metrics_chunk = 10;  
+}
+
+message GetWorkRequest {
+  optional string island_hash = 1;    // Make sure we request from the right island
+  optional string client_profile = 2; // Allows clients to ask for right-sized work blocks
+}
+
+message PutWorkResponse {
+  optional uint32 code = 1;
+  optional string result = 2;
+}
+
+message PutBenchmarkRequest {
+  optional Benchmark benchmark = 1;
+}
+
+message PutBenchmarkResponse {
+  optional StatusEnum status = 1;
+}
+
+message RunBattlesRequest {
+  optional string benchmark_hash = 1;
+  repeated Entry entries = 2;
+  optional uint32 quick_min_score = 3;
+  optional uint32 quick_score_rounds = 4;
+  optional bool do_quick_score = 5; // Set if you want to quick test before running full
+}
+
+message RunBattlesResponse {
+  repeated Entry results = 1;
+  optional uint64 rounds_executed = 2; // Number of rounds we executed 
+  optional double elapsed_seconds = 3; // The number of seconds we worked on this
+}
